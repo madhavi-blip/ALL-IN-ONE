@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Preethi Vedha — One Jar. Every Recipe.</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<style>
+:root{
+  --bg:#0A0A0A; --surface:#141414; --text:#FDFBF7; --text-sec:#A3A3A3;
+  --copper:#B87333; --copper-light:#D98A55; --border:rgba(255,255,255,0.1);
+}
+*{box-sizing:border-box; margin:0; padding:0;}
+html,body{background:var(--bg); color:var(--text); font-family:'Outfit',sans-serif; -webkit-font-smoothing:antialiased; overflow-x:hidden; cursor:none;}
+.font-display{font-family:'Cormorant Garamond',serif;}
+::selection{background:var(--copper); color:var(--bg);}
+a{color:inherit; text-decoration:none;}
+button{font-family:inherit; cursor:none; border:none; background:none; color:inherit;}
+
+.cursor-dot{position:fixed; top:0; left:0; width:8px; height:8px; border-radius:50%; background:var(--copper-light); pointer-events:none; z-index:9999; transform:translate(-50%,-50%); mix-blend-mode:difference; transition:width .25s,height .25s;}
+.cursor-ring{position:fixed; top:0; left:0; width:36px; height:36px; border-radius:50%; border:1px solid rgba(217,138,85,.55); pointer-events:none; z-index:9998; transform:translate(-50%,-50%); transition:width .3s,height .3s,border-color .3s;}
+body.hover .cursor-ring{width:64px; height:64px; border-color:var(--copper-light);}
+body.hover .cursor-dot{width:4px; height:4px;}
+
+.grain{position:fixed; inset:0; pointer-events:none; z-index:50; opacity:.06; mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/></svg>");}
+
+.glass{background:rgba(10,10,10,.55); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px); border:1px solid rgba(255,255,255,.08);}
+.pill-active{background:var(--copper) !important; color:var(--bg) !important; border-color:var(--copper) !important; box-shadow:0 0 32px rgba(184,115,51,.45), inset 0 0 0 1px rgba(255,255,255,.15);}
+.reveal{opacity:0; transform:translateY(40px); transition:opacity 1s cubic-bezier(.2,.8,.2,1), transform 1s cubic-bezier(.2,.8,.2,1);}
+.reveal.in{opacity:1; transform:translateY(0);}
+.hero-vignette{background:radial-gradient(ellipse at center, transparent 0%, transparent 55%, rgba(10,10,10,.7) 100%);}
+@keyframes marquee{0%{transform:translateX(0);} 100%{transform:translateX(-50%);}}
+.marquee-track{animation:marquee 28s linear infinite; display:flex; white-space:nowrap; gap:40px; will-change:transform;}
+.wrap{max-width:1440px; margin:0 auto; padding:0 24px;}
+@media(min-width:1024px){.wrap{padding:0 48px;}}
+
+header{position:fixed; top:0; left:0; right:0; z-index:40; transition:all .5s;}
+header.scrolled{background:rgba(10,10,10,.55); backdrop-filter:blur(16px); border-bottom:1px solid rgba(255,255,255,.05);}
+.nav-row{display:flex; align-items:center; justify-content:space-between; padding:20px 0;}
+.logo{display:flex; align-items:center; gap:12px;}
+.logo-dot{position:relative; display:flex; align-items:center; justify-content:center; width:32px; height:32px;}
+.logo-dot span{position:absolute; border-radius:50%;}
+.logo-dot .ring{inset:0; border:1px solid rgba(184,115,51,.4);}
+.logo-dot .fill{inset:6px; background:var(--copper);}
+.logo-dot .hole{inset:10px; background:var(--bg);}
+.logo-text{font-family:'Cormorant Garamond',serif; font-size:20px; letter-spacing:-0.02em; line-height:1.1;}
+.logo-sub{font-size:10px; letter-spacing:.3em; text-transform:uppercase; color:var(--copper-light);}
+nav.desktop{display:none;}
+@media(min-width:1024px){nav.desktop{display:flex;}}
+.nav-link{position:relative; padding:8px 20px; font-size:14px; letter-spacing:.02em; color:rgba(255,255,255,.7); transition:color .3s;}
+.nav-link:hover{color:#fff;}
+.nav-link .underline{position:absolute; left:20px; right:20px; bottom:6px; height:1px; background:var(--copper-light); transform:scaleX(0); transform-origin:left; transition:transform .5s;}
+.nav-link:hover .underline{transform:scaleX(1);}
+.mobile-toggle{display:flex; align-items:center; justify-content:center; width:40px; height:40px; border:1px solid rgba(255,255,255,.15); border-radius:50%;}
+.mobile-toggle span{width:16px; height:1px; background:#fff; position:relative;}
+.mobile-toggle span::before,.mobile-toggle span::after{content:''; position:absolute; width:16px; height:1px; background:#fff; left:0;}
+.mobile-toggle span::before{top:-6px;} .mobile-toggle span::after{top:6px;}
+.mobile-nav{display:none; background:rgba(10,10,10,.95); backdrop-filter:blur(16px); border-top:1px solid rgba(255,255,255,.05);}
+.mobile-nav.open{display:block;}
+.mobile-nav-inner{padding:24px; display:flex; flex-direction:column; gap:12px;}
+.mobile-nav a{font-family:'Cormorant Garamond',serif; font-size:18px; padding:8px 0; border-bottom:1px solid rgba(255,255,255,.05);}
+
+#hero{position:relative; height:100vh; min-height:720px; width:100%; overflow:hidden;}
+#mixi-canvas{position:absolute; inset:0; z-index:0;}
+.hero-overlay{position:absolute; inset:0; z-index:1; pointer-events:none;}
+.hero-content{position:relative; z-index:10; height:100%; display:flex; flex-direction:column; justify-content:flex-end; padding-bottom:48px;}
+.hero-grid{display:grid; grid-template-columns:repeat(12,1fr); gap:24px; align-items:end; width:100%;}
+.hero-left{grid-column:span 12; pointer-events:none;}
+@media(min-width:1024px){.hero-left{grid-column:span 6;}}
+.eyebrow{display:flex; align-items:center; font-size:11px; letter-spacing:.35em; text-transform:uppercase; color:var(--copper-light); margin-bottom:20px;}
+.eyebrow .line{display:inline-block; width:32px; height:1px; background:var(--copper-light); margin-right:12px;}
+h1.hero-h1{font-family:'Cormorant Garamond',serif; font-weight:300; line-height:.95; font-size:48px; letter-spacing:-0.02em;}
+@media(min-width:640px){h1.hero-h1{font-size:60px;}}
+@media(min-width:1024px){h1.hero-h1{font-size:88px;}}
+h1.hero-h1 em{font-style:italic; color:var(--copper-light);}
+.hero-sub{margin-top:24px; color:rgba(255,255,255,.65); font-size:16px; max-width:420px; line-height:1.6;}
+.hero-ctas{margin-top:32px; display:flex; flex-wrap:wrap; align-items:center; gap:16px; pointer-events:auto;}
+.btn-primary{display:inline-flex; align-items:center; gap:12px; border-radius:999px; background:var(--copper); color:var(--bg); padding:14px 28px; font-size:14px; font-weight:600; letter-spacing:.02em; transition:background .3s, box-shadow .3s;}
+.btn-primary:hover{background:var(--copper-light); box-shadow:0 0 40px rgba(184,115,51,.5);}
+.btn-primary svg{transition:transform .3s;}
+.btn-primary:hover svg{transform:translateX(4px);}
+.status-card-top{position:fixed; top:88px; right:24px; z-index:30; max-width:320px; text-align:right; border-radius:16px; padding:16px 20px;}
+@media(min-width:1024px){.status-card-top{right:48px;}}
+.status-eyebrow{font-size:10px; letter-spacing:.3em; text-transform:uppercase; color:var(--copper-light); margin-bottom:8px;}
+.status-big{font-family:'Cormorant Garamond',serif; font-style:italic; font-size:22px; color:#fff;}
+.status-small{font-size:12px; color:rgba(255,255,255,.55); margin-top:8px; line-height:1.5;}
+.recipe-dock{margin-top:40px; width:100%; display:flex; flex-wrap:wrap; gap:10px; justify-content:center; pointer-events:auto;}
+@media(min-width:1024px){.recipe-dock{justify-content:flex-start;}}
+.pill{border-radius:999px; border:1px solid rgba(255,255,255,.15); padding:10px 20px; font-size:13px; letter-spacing:.02em; color:rgba(255,255,255,.8); transition:all .3s;}
+.pill:hover{border-color:var(--copper-light); color:var(--copper-light);}
+</style>
+</head>
+<body>
+
+<div class="cursor-dot"></div>
+<div class="cursor-ring"></div>
+<div class="grain"></div>
+
+<header id="nav">
+  <div class="wrap nav-row">
+    <a href="#hero" class="logo">
+      <div class="logo-dot"><span class="ring"></span><span class="fill"></span><span class="hole"></span></div>
+      <div>
+        <div class="logo-text">Preethi</div>
+        <div class="logo-sub">Vedha</div>
+      </div>
+    </a>
+    <nav class="desktop">
+      <a href="#hero" class="nav-link">Vedha<span class="underline"></span></a>
+      <a href="#" class="nav-link" data-recipe-link="dosa">Dosa<span class="underline"></span></a>
+      <a href="#" class="nav-link" data-recipe-link="juice">Juice<span class="underline"></span></a>
+      <a href="#" class="nav-link" data-recipe-link="flour">Flour<span class="underline"></span></a>
+    </nav>
+    <div style="display:flex; align-items:center; gap:12px;">
+      <button class="mobile-toggle" id="mobileToggle" aria-label="Toggle menu"><span></span></button>
+    </div>
+  </div>
+  <div class="mobile-nav" id="mobileNav">
+    <div class="mobile-nav-inner">
+      <a href="#hero">Vedha</a>
+      <a href="#" data-recipe-link="dosa">Dosa + Idli</a>
+      <a href="#" data-recipe-link="juice">Juice</a>
+      <a href="#" data-recipe-link="slice">Slicing</a>
+      <a href="#" data-recipe-link="flour">Flour</a>
+    </div>
+  </div>
+</header>
+
+<section id="hero">
+  <canvas id="mixi-canvas"></canvas>
+  <div class="hero-overlay hero-vignette"></div>
+  <div class="status-card-top glass" id="statusCardTop">
+    <div class="status-eyebrow">Live</div>
+    <div class="status-big" id="statusBig">Reinventing Tradition</div>
+    <div class="status-small" id="statusSmall">Move cursor across the jar — it rotates 360° in your hand.</div>
+  </div>
+  <div class="hero-content wrap">
+    <div class="hero-grid">
+      <div class="hero-left reveal in">
+        <div class="eyebrow"><span class="line"></span>Introducing — Vedha</div>
+        <h1 class="hero-h1">One jar.<br><em>Every</em> recipe.</h1>
+        <p class="hero-sub">Auto-stop at 60 seconds. Dosa batter without a wet grinder. Built for the modern Indian kitchen.</p>
+        <div class="hero-ctas">
+          <button class="btn-primary" id="ctaPrimary">
+            Watch it cook
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="recipe-dock reveal in" id="recipeDock">
+      <button class="pill pill-active" data-recipe="idle">Idle</button>
+      <button class="pill" data-recipe="dosa">Dosa + Idli</button>
+      <button class="pill" data-recipe="juice">Juice</button>
+      <button class="pill" data-recipe="slice">Slicing</button>
+      <button class="pill" data-recipe="flour">Flour</button>
+    </div>
+  </div>
+</section>
+
+<script>
+/* CURSOR */
+(function(){
+  const dot=document.querySelector('.cursor-dot'),ring=document.querySelector('.cursor-ring');
+  let mx=innerWidth/2,my=innerHeight/2,rx=mx,ry=my;
+  window.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;dot.style.left=mx+'px';dot.style.top=my+'px';});
+  function loop(){rx+=(mx-rx)*0.18;ry+=(my-ry)*0.18;ring.style.left=rx+'px';ring.style.top=ry+'px';requestAnimationFrame(loop);}
+  loop();
+  document.addEventListener('mouseover',e=>{if(e.target.closest('button,a'))document.body.classList.add('hover');});
+  document.addEventListener('mouseout',e=>{if(e.target.closest('button,a'))document.body.classList.remove('hover');});
+})();
+
+/* NAV */
+(function(){
+  const header=document.getElementById('nav');
+  window.addEventListener('scroll',()=>header.classList.toggle('scrolled',window.scrollY>32));
+  const toggle=document.getElementById('mobileToggle'),mobileNav=document.getElementById('mobileNav');
+  toggle.addEventListener('click',()=>mobileNav.classList.toggle('open'));
+  mobileNav.querySelectorAll('a').forEach(a=>a.addEventListener('click',()=>mobileNav.classList.remove('open')));
+})();
+
+/* REVEAL */
+(function(){
+  const io=new IntersectionObserver(entries=>entries.forEach(e=>e.isIntersecting&&e.target.classList.add('in')),{threshold:0.12});
+  document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+})();
+
+/* STATE */
+const STATUS={
+  idle:{big:"Reinventing Tradition",small:"Move cursor across the jar — it rotates 360° in your hand."},
+  dosa:{big:"Dosa Batter, Ground Smooth",small:"Rice + urad, no wet grinder. Crispy dosas with idli, ready in minutes."},
+  juice:{big:"Fresh Juice, Same Jar",small:"Pulp-rich, pour-ready. Switch from batter to juice in seconds."},
+  slice:{big:"Precision Slicing",small:"Even, paper-thin slices — straight from the same Vedha jar."},
+  flour:{big:"Fine, Even Flour",small:"Dry-grind spices and grains. Restaurant-grade consistency."},
+};
+let currentRecipe="idle";
+function setRecipe(key){
+  currentRecipe=key;
+  document.getElementById('statusBig').textContent=STATUS[key].big;
+  document.getElementById('statusSmall').textContent=STATUS[key].small;
+  document.querySelectorAll('#recipeDock .pill').forEach(p=>p.classList.toggle('pill-active',p.dataset.recipe===key));
+}
+document.querySelectorAll('#recipeDock .pill').forEach(btn=>btn.addEventListener('click',()=>setRecipe(btn.dataset.recipe)));
+document.getElementById('ctaPrimary').addEventListener('click',()=>setRecipe('dosa'));
+document.querySelectorAll('[data-recipe-link]').forEach(link=>{
+  link.addEventListener('click',e=>{e.preventDefault();setRecipe(link.dataset.recipeLink);document.getElementById('mobileNav').classList.remove('open');});
+});
+
+/* THREE.JS — CINEMATIC MIXI */
+(function(){
+  const canvas=document.getElementById('mixi-canvas');
+  const scene=new THREE.Scene();
+
+  /* ── ENVIRONMENT MAP (the key upgrade) ──
+     We build a PMREMGenerator from a procedural RoomEnvironment
+     so metals have something rich to reflect */
+  const renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:false,powerPreference:'high-performance'});
+  renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+  renderer.setSize(innerWidth,innerHeight);
+  renderer.shadowMap.enabled=true;
+  renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+  renderer.toneMapping=THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure=1.35;
+  renderer.outputEncoding=THREE.sRGBEncoding;
+
+  /* build env texture from gradient sky */
+  const pmrem=new THREE.PMREMGenerator(renderer);
+  pmrem.compileEquirectangularShader();
+
+  /* procedural warm-studio env */
+  function buildEnvScene(){
+    const s=new THREE.Scene();
+    // warm key from upper-right
+    const k=new THREE.DirectionalLight(0xFFD4A0,3.5); k.position.set(5,8,4); s.add(k);
+    // cool fill left
+    const f=new THREE.DirectionalLight(0x8AAFD4,1.2); f.position.set(-6,3,2); s.add(f);
+    // warm ground bounce
+    const g=new THREE.DirectionalLight(0xC87840,0.8); g.position.set(0,-4,0); s.add(g);
+    // white rim back
+    const r=new THREE.DirectionalLight(0xFFFFFF,4.0); r.position.set(0,2,-8); s.add(r);
+    // copper accent
+    const c=new THREE.PointLight(0xB87333,2.5,12); c.position.set(2,-1,4); s.add(c);
+    s.add(new THREE.AmbientLight(0xFFEEDD,0.6));
+    return s;
+  }
+  const envTexture=pmrem.fromScene(buildEnvScene()).texture;
+  scene.environment=envTexture;
+  scene.background=new THREE.Color(0x0A0A0A);
+  scene.fog=new THREE.Fog(0x0A0A0A,10,22);
+
+  const camera=new THREE.PerspectiveCamera(38,innerWidth/innerHeight,0.1,100);
+  camera.position.set(0,0.4,6.5);
+
+  /* scene lights on top of env */
+  scene.add(new THREE.AmbientLight(0xFDFBF7,0.2));
+  const key=new THREE.DirectionalLight(0xD98A55,1.8); key.position.set(4,5,4); key.castShadow=true;
+  key.shadow.mapSize.set(2048,2048); key.shadow.camera.near=0.5; key.shadow.camera.far=30;
+  scene.add(key);
+  const fill=new THREE.DirectionalLight(0x8FA8C7,0.5); fill.position.set(-4,2,3); scene.add(fill);
+  const rim=new THREE.DirectionalLight(0xFFFFFF,3.5); rim.position.set(0,3,-5); scene.add(rim);
+  const pop=new THREE.PointLight(0xB87333,1.6,10); pop.position.set(0,-3,3); scene.add(pop);
+
+  /* floor for shadow catch */
+  const floor=new THREE.Mesh(new THREE.PlaneGeometry(20,20),new THREE.ShadowMaterial({opacity:0.25}));
+  floor.rotation.x=-Math.PI/2; floor.position.y=-2.6; floor.receiveShadow=true; scene.add(floor);
+
+  const root=new THREE.Group(); root.position.set(0,-0.2,0); scene.add(root);
+
+  /* MATERIAL HELPERS */
+  function metal(col,rough=0.15,clear=0.8){
+    return new THREE.MeshPhysicalMaterial({color:col,metalness:1.0,roughness:rough,
+      clearcoat:clear,clearcoatRoughness:0.1,envMapIntensity:2.2});
+  }
+  function plastic(col,rough=0.45){
+    return new THREE.MeshPhysicalMaterial({color:col,metalness:0.25,roughness:rough,
+      clearcoat:0.5,clearcoatRoughness:0.2,envMapIntensity:1.4});
+  }
+  function glass(col,trans=0.92){
+    return new THREE.MeshPhysicalMaterial({color:col,metalness:0,roughness:0.04,
+      transmission:trans,thickness:0.8,ior:1.52,transparent:true,
+      clearcoat:1.0,clearcoatRoughness:0.02,envMapIntensity:2.0,side:THREE.DoubleSide});
+  }
+
+  /* ── BASE ── */
+  const base=new THREE.Mesh(new THREE.CylinderGeometry(1.35,1.55,0.85,72),plastic(0x18110C,0.4));
+  base.position.set(0,-1.95,0); base.castShadow=true; base.receiveShadow=true; root.add(base);
+
+  const chromeBand=new THREE.Mesh(new THREE.CylinderGeometry(1.37,1.37,0.09,72),metal(0xD0D0D0,0.08));
+  chromeBand.position.set(0,-1.575,0); root.add(chromeBand);
+
+  const bottomPlate=new THREE.Mesh(new THREE.CylinderGeometry(1.52,1.52,0.07,72),plastic(0x0C0908,0.7));
+  bottomPlate.position.set(0,-2.42,0); root.add(bottomPlate);
+
+  /* rubber feet */
+  for(let i=0;i<4;i++){
+    const a=(i/4)*Math.PI*2+Math.PI/4;
+    const foot=new THREE.Mesh(new THREE.CylinderGeometry(0.12,0.12,0.06,16),new THREE.MeshStandardMaterial({color:0x111111,roughness:0.9}));
+    foot.position.set(Math.cos(a)*1.2,-2.46,Math.sin(a)*1.2); root.add(foot);
+  }
+
+  /* dial */
+  const dialGroup=new THREE.Group(); dialGroup.position.set(1.0,-1.95,0.9); dialGroup.rotation.set(0.2,-0.4,0);
+  const dialBody=new THREE.Mesh(new THREE.CylinderGeometry(0.22,0.22,0.13,32),plastic(0x3A2A1F,0.45));
+  dialBody.rotation.set(Math.PI/2,0,0); dialGroup.add(dialBody);
+  const dialRing=new THREE.Mesh(new THREE.TorusGeometry(0.22,0.016,12,32),metal(0xB87333,0.2));
+  dialRing.position.set(0,0,0.07); dialGroup.add(dialRing);
+  const dialLed=new THREE.Mesh(new THREE.CylinderGeometry(0.045,0.045,0.18,16),new THREE.MeshStandardMaterial({color:0xD98A55,emissive:0xB87333,emissiveIntensity:1.2}));
+  dialLed.position.set(0,0.07,0); dialGroup.add(dialLed);
+  root.add(dialGroup);
+
+  /* ── JAR (polished stainless) ── */
+  const jar=new THREE.Mesh(new THREE.CylinderGeometry(0.9,1.15,1.82,80,1,true),metal(0xE8E8E8,0.06,1.0));
+  jar.position.set(0,-0.6,0); jar.castShadow=true; root.add(jar);
+
+  /* jar bottom ring */
+  const jarBottom=new THREE.Mesh(new THREE.CylinderGeometry(1.14,1.14,0.05,72),metal(0xCCCCCC,0.12));
+  jarBottom.position.set(0,-1.49,0); root.add(jarBottom);
+
+  /* jar seam lines (lathed look) */
+  for(let i=0;i<3;i++){
+    const y=-0.6+i*0.55-0.2;
+    const seam=new THREE.Mesh(new THREE.TorusGeometry(1.0-i*0.08,0.008,6,80),metal(0xAAAAAA,0.3));
+    seam.position.set(0,y,0); seam.rotation.set(Math.PI/2,0,0); root.add(seam);
+  }
+
+  /* copper accent band */
+  const copperBand=new THREE.Mesh(new THREE.TorusGeometry(1.06,0.055,18,80),metal(0xB87333,0.18,1.0));
+  copperBand.position.set(0,-0.6,0); copperBand.rotation.set(Math.PI/2,0,0); root.add(copperBand);
+
+  /* handle — ergonomic shape */
+  const handleGroup=new THREE.Group(); handleGroup.position.set(1.06,-0.65,0); handleGroup.rotation.set(0,0,-0.35);
+  const hMain=new THREE.Mesh(new THREE.BoxGeometry(0.44,0.24,0.19),plastic(0x18110C,0.5));
+  hMain.geometry=roundedBox(0.44,0.24,0.19,0.04,8); handleGroup.add(hMain);
+  const hTab=new THREE.Mesh(new THREE.BoxGeometry(0.18,0.34,0.17),plastic(0x18110C,0.5));
+  hTab.geometry=roundedBox(0.18,0.34,0.17,0.04,8); hTab.position.set(0.3,-0.05,0); handleGroup.add(hTab);
+  const hChrome=new THREE.Mesh(new THREE.BoxGeometry(0.44,0.04,0.21),metal(0xCCCCCC,0.1));
+  hChrome.position.set(0,0.12,0); handleGroup.add(hChrome);
+  root.add(handleGroup);
+
+  /* ── BATTER (liquid fill) ── */
+  const batter=new THREE.Mesh(new THREE.CylinderGeometry(0.86,1.01,1.42,56),
+    new THREE.MeshPhysicalMaterial({color:0xF1E6CF,roughness:0.3,transmission:0.12,thickness:0.5,
+      clearcoat:0.9,clearcoatRoughness:0.15,sheen:0.8,sheenColor:new THREE.Color(0xffffff),envMapIntensity:1.0}));
+  batter.position.set(0,-0.5,0); batter.scale.set(1,0.02,1); root.add(batter);
+
+  /* liquid surface shimmer */
+  const surface=new THREE.Mesh(new THREE.CircleGeometry(0.85,56),
+    new THREE.MeshPhysicalMaterial({color:0xF8F0E0,roughness:0.08,clearcoat:1.0,clearcoatRoughness:0.05,envMapIntensity:2.5}));
+  surface.rotation.x=-Math.PI/2; surface.position.set(0,-0.5,0); surface.scale.set(1,1,0.001); root.add(surface);
+
+  /* ── BLADE ── */
+  const blade=new THREE.Group(); blade.position.set(0,-1.4,0); blade.userData.speed=0;
+  const b1=new THREE.Mesh(new THREE.BoxGeometry(1.45,0.04,0.095),metal(0xD0D0D0,0.1));
+  b1.geometry=new THREE.BoxGeometry(1.45,0.04,0.095); blade.add(b1);
+  const b2=new THREE.Mesh(new THREE.BoxGeometry(1.45,0.04,0.095),metal(0xD0D0D0,0.1));
+  b2.rotation.set(0,Math.PI/2,0); blade.add(b2);
+  /* blade tips angled */
+  [0,Math.PI/2,Math.PI,Math.PI*1.5].forEach(a=>{
+    const tip=new THREE.Mesh(new THREE.BoxGeometry(0.18,0.06,0.07),metal(0xB8B8B8,0.08));
+    tip.position.set(Math.cos(a)*0.65,0,Math.sin(a)*0.65); tip.rotation.y=a; tip.rotation.z=0.35; blade.add(tip);
+  });
+  const hub=new THREE.Mesh(new THREE.CylinderGeometry(0.07,0.07,0.28,20),metal(0x999999,0.2));
+  blade.add(hub);
+  root.add(blade);
+
+  /* ── LID ── */
+  const lid=new THREE.Group(); lid.position.set(0,1.42,0);
+  const lidBody=new THREE.Mesh(new THREE.CylinderGeometry(0.96,0.93,0.34,72),plastic(0x18110C,0.5));
+  lid.add(lidBody);
+  const lidChrome=new THREE.Mesh(new THREE.CylinderGeometry(0.93,0.93,0.06,72),metal(0xCCCCCC,0.1));
+  lidChrome.position.set(0,-0.14,0); lid.add(lidChrome);
+  const groove=new THREE.Mesh(new THREE.TorusGeometry(0.89,0.018,10,72),metal(0x2a1f17,0.6));
+  groove.position.set(0,0.05,0); groove.rotation.set(Math.PI/2,0,0); lid.add(groove);
+  const spoutCap=new THREE.Mesh(new THREE.CylinderGeometry(0.23,0.27,0.52,36),metal(0xD0D0D0,0.08));
+  spoutCap.position.set(0,0.43,0); lid.add(spoutCap);
+  const spoutTop=new THREE.Mesh(new THREE.SphereGeometry(0.23,36,36),metal(0xD0D0D0,0.08));
+  spoutTop.position.set(0,0.71,0); lid.add(spoutTop);
+  root.add(lid);
+
+  /* brand strip */
+  const decal=new THREE.Mesh(new THREE.BoxGeometry(0.95,0.14,0.01),
+    new THREE.MeshStandardMaterial({color:0xB87333,emissive:0xB87333,emissiveIntensity:0.5,roughness:0.4}));
+  decal.position.set(0,-1.85,1.37); root.add(decal);
+
+  /* ── FOOD REVEALS ── */
+  function mkGroup(x,y,z){const g=new THREE.Group();g.position.set(x,y,z);g.scale.setScalar(0.0001);return g;}
+
+  /* DOSA PLATE */
+  const dosaGroup=mkGroup(3.0,-1.2,0); scene.add(dosaGroup);
+  const plate=new THREE.Mesh(new THREE.CylinderGeometry(1.62,1.5,0.09,72),
+    new THREE.MeshPhysicalMaterial({color:0xF8F2E8,roughness:0.3,clearcoat:0.7,envMapIntensity:1.5}));
+  plate.position.set(0,-0.55,0); plate.receiveShadow=true; dosaGroup.add(plate);
+  const plateRim=new THREE.Mesh(new THREE.TorusGeometry(1.52,0.045,12,72),
+    new THREE.MeshPhysicalMaterial({color:0xE8D8C0,roughness:0.35,clearcoat:0.5}));
+  plateRim.position.set(0,-0.5,0); plateRim.rotation.set(Math.PI/2,0,0); dosaGroup.add(plateRim);
+
+  const dosaDisc=new THREE.Mesh(new THREE.CylinderGeometry(1.02,1.06,0.045,72),
+    new THREE.MeshPhysicalMaterial({color:0xC48040,roughness:0.75,clearcoat:0.25,envMapIntensity:0.8}));
+  dosaDisc.position.set(-0.35,-0.42,0); dosaDisc.rotation.set(0,0.4,0); dosaGroup.add(dosaDisc);
+  for(let i=0;i<12;i++){
+    const a=(i/12)*Math.PI*2,r=0.3+((i*37)%50)/100;
+    const spot=new THREE.Mesh(new THREE.SphereGeometry(0.045,8,8),new THREE.MeshStandardMaterial({color:0x6B3416,roughness:0.9}));
+    spot.position.set(Math.cos(a)*r+(-0.35),-0.4,Math.sin(a)*r); dosaGroup.add(spot);
+  }
+
+  function makeIdli(x,z){
+    const g=new THREE.Group(); g.position.set(x,-0.38,z);
+    const dome=new THREE.Mesh(new THREE.SphereGeometry(0.33,32,24),
+      new THREE.MeshPhysicalMaterial({color:0xFDFCF8,roughness:0.82,clearcoat:0.3,envMapIntensity:0.8}));
+    g.add(dome);
+    for(let i=0;i<8;i++){
+      const a=(i/8)*Math.PI*2;
+      const d=new THREE.Mesh(new THREE.SphereGeometry(0.028,8,8),new THREE.MeshStandardMaterial({color:0xECE5D5,roughness:1}));
+      d.position.set(Math.cos(a)*0.23,0.04,Math.sin(a)*0.23); g.add(d);
+    }
+    return g;
+  }
+  dosaGroup.add(makeIdli(0.88,0.1));
+  dosaGroup.add(makeIdli(0.6,-0.52));
+  const chutney=new THREE.Mesh(new THREE.SphereGeometry(0.24,24,16),
+    new THREE.MeshPhysicalMaterial({color:0xEADFB8,roughness:0.65,clearcoat:0.5}));
+  chutney.position.set(1.08,-0.44,-0.95); dosaGroup.add(chutney);
+
+  const steamData=[];
+  for(let i=0;i<16;i++){
+    const s={x:(Math.random()-0.5)*1.8,z:(Math.random()-0.5)*0.9,offset:Math.random()*Math.PI*2,speed:0.35+Math.random()*0.55,scale:0.07+Math.random()*0.11};
+    const mesh=new THREE.Mesh(new THREE.SphereGeometry(s.scale,8,8),new THREE.MeshBasicMaterial({color:0xFDFBF7,transparent:true,opacity:0}));
+    mesh.position.set(s.x,0,s.z); dosaGroup.add(mesh); steamData.push({mesh,...s});
+  }
+
+  /* JUICE GLASS */
+  const juiceGroup=mkGroup(3.0,-0.6,0); scene.add(juiceGroup);
+  const glassBody=new THREE.Mesh(new THREE.CylinderGeometry(0.56,0.46,1.62,56,1,true),glass(0xffffff));
+  juiceGroup.add(glassBody);
+  const liquid=new THREE.Mesh(new THREE.CylinderGeometry(0.51,0.43,1.32,56),
+    new THREE.MeshPhysicalMaterial({color:0xFF8820,roughness:0.2,clearcoat:1.0,clearcoatRoughness:0.04,
+      emissive:0xFF6800,emissiveIntensity:0.18,envMapIntensity:1.8}));
+  liquid.position.set(0,-0.05,0); juiceGroup.add(liquid);
+  for(let i=0;i<22;i++){
+    const a=(i/22)*Math.PI*2*3.1,r=((i*53)%38)/100;
+    const speck=new THREE.Mesh(new THREE.SphereGeometry(0.022,6,6),new THREE.MeshStandardMaterial({color:0xFFB870,roughness:0.55}));
+    speck.position.set(Math.cos(a)*r,-0.35+((i*41)%100)/100,Math.sin(a)*r); juiceGroup.add(speck);
+  }
+  const glassBase=new THREE.Mesh(new THREE.CylinderGeometry(0.47,0.47,0.045,56),glass(0xffffff,0.88));
+  glassBase.position.set(0,-0.83,0); juiceGroup.add(glassBase);
+
+  /* SLICING BOARD */
+  const sliceBoardGroup=mkGroup(3.0,-1.0,0); scene.add(sliceBoardGroup);
+  const board=new THREE.Mesh(new THREE.BoxGeometry(2.65,0.11,1.65),
+    new THREE.MeshPhysicalMaterial({color:0x7A4A2A,roughness:0.68,clearcoat:0.35,envMapIntensity:1.2}));
+  sliceBoardGroup.add(board);
+  [-0.72,-0.32,0.08,0.48,0.88].forEach(x=>{
+    const g=new THREE.Group(); g.position.set(x,0.07,-0.22);
+    const t=new THREE.Mesh(new THREE.CylinderGeometry(0.29,0.29,0.042,36),new THREE.MeshStandardMaterial({color:0xD03A20,roughness:0.42}));
+    g.add(t);
+    const tc=new THREE.Mesh(new THREE.CylinderGeometry(0.13,0.13,0.005,24),new THREE.MeshStandardMaterial({color:0x9BBF5A,roughness:0.5}));
+    tc.position.set(0,0.025,0); g.add(tc);
+    sliceBoardGroup.add(g);
+  });
+  [-0.72,-0.32,0.08,0.48,0.88].forEach(x=>{
+    const g=new THREE.Group(); g.position.set(x,0.07,0.42);
+    const c=new THREE.Mesh(new THREE.CylinderGeometry(0.23,0.23,0.034,36),new THREE.MeshStandardMaterial({color:0xA8C870,roughness:0.52}));
+    g.add(c);
+    const cc=new THREE.Mesh(new THREE.CylinderGeometry(0.08,0.08,0.005,24),new THREE.MeshStandardMaterial({color:0xE8F0C0,roughness:0.5}));
+    cc.position.set(0,0.022,0); g.add(cc);
+    sliceBoardGroup.add(g);
+  });
+
+  /* FLOUR BOWL */
+  const flourGroup=mkGroup(3.0,-0.9,0); scene.add(flourGroup);
+  const bowl=new THREE.Mesh(new THREE.CylinderGeometry(1.02,0.72,0.42,56),
+    new THREE.MeshPhysicalMaterial({color:0x5A3520,roughness:0.68,clearcoat:0.4,envMapIntensity:1.2}));
+  bowl.position.set(0,-0.45,0); flourGroup.add(bowl);
+  const mound=new THREE.Mesh(new THREE.ConeGeometry(0.88,0.62,72),
+    new THREE.MeshPhysicalMaterial({color:0xF5EDD8,roughness:0.93,sheen:0.6,sheenColor:new THREE.Color(0xffffff),envMapIntensity:0.5}));
+  mound.position.set(0,-0.14,0); flourGroup.add(mound);
+  const moundBase=new THREE.Mesh(new THREE.CylinderGeometry(0.9,0.88,0.11,56),
+    new THREE.MeshPhysicalMaterial({color:0xF5EDD8,roughness:0.93}));
+  moundBase.position.set(0,-0.29,0); flourGroup.add(moundBase);
+
+  /* SPARKLES */
+  const sparkleGeo=new THREE.BufferGeometry();
+  const sc=60;
+  const sp=new Float32Array(sc*3);
+  for(let i=0;i<sc;i++){sp[i*3]=(Math.random()-0.5)*4.5;sp[i*3+1]=(Math.random()-0.5)*3.5;sp[i*3+2]=(Math.random()-0.5)*4.5;}
+  sparkleGeo.setAttribute('position',new THREE.BufferAttribute(sp,3));
+  const sparkleMat=new THREE.PointsMaterial({color:0xD98A55,size:0.06,transparent:true,opacity:0,sizeAttenuation:true});
+  scene.add(new THREE.Points(sparkleGeo,sparkleMat));
+
+  /* ROUNDED BOX HELPER */
+  function roundedBox(w,h,d,r,s){
+    const shape=new THREE.Shape();
+    const x=-w/2,y=-h/2;
+    shape.moveTo(x+r,y); shape.lineTo(x+w-r,y);
+    shape.quadraticCurveTo(x+w,y,x+w,y+r);
+    shape.lineTo(x+w,y+h-r); shape.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+    shape.lineTo(x+r,y+h); shape.quadraticCurveTo(x,y+h,x,y+h-r);
+    shape.lineTo(x,y+r); shape.quadraticCurveTo(x,y,x+r,y);
+    const settings={depth:d,bevelEnabled:true,bevelSegments:s,steps:1,bevelSize:r*0.5,bevelThickness:r*0.5};
+    return new THREE.ExtrudeGeometry(shape,settings);
+  }
+
+  /* INPUT */
+  const mouse={x:0,y:0};
+  let scrollY=0;
+  window.addEventListener('mousemove',e=>{mouse.x=(e.clientX/innerWidth-0.5)*2;mouse.y=(e.clientY/innerHeight-0.5)*2;});
+  window.addEventListener('scroll',()=>{scrollY=window.scrollY;},{passive:true});
+  window.addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
+
+  const SPEEDS={idle:0,dosa:22,juice:18,slice:14,flour:12};
+  const BATTER_COLORS={
+    idle:new THREE.Color(0x888888),dosa:new THREE.Color(0xF1E6CF),juice:new THREE.Color(0xFF8A3D),
+    slice:new THREE.Color(0x9BBF6B),flour:new THREE.Color(0xEFE4C4)
+  };
+  const BATTER_FILL={idle:0.02,dosa:1,juice:0.95,slice:0.6,flour:0.85};
+
+  const clock=new THREE.Clock();
+
+  function animate(){
+    requestAnimationFrame(animate);
+    const t=clock.getElapsedTime();
+    const dt=Math.min(clock.getDelta(),0.05);
+
+    root.rotation.y+=((mouse.x*Math.PI)-root.rotation.y)*0.06;
+    root.rotation.x+=((-mouse.y*(Math.PI/4))-root.rotation.x)*0.06;
+    root.position.y=Math.sin(t*0.8)*0.08;
+
+    const sy=scrollY/innerHeight;
+    root.position.x=sy*-1.2;
+    root.rotation.z=sy*-0.18;
+
+    blade.userData.speed=THREE.MathUtils.lerp(blade.userData.speed,SPEEDS[currentRecipe]??0,0.04);
+    blade.rotation.y+=blade.userData.speed*dt;
+
+    if(currentRecipe!=='idle'){root.position.x+=((Math.random()-0.5)*0.008);}
+
+    const tf=BATTER_FILL[currentRecipe]??0.02;
+    batter.scale.y=THREE.MathUtils.lerp(batter.scale.y,tf,0.05);
+    batter.position.y=-0.5+batter.scale.y*0.7;
+    batter.material.color.lerp(BATTER_COLORS[currentRecipe]??BATTER_COLORS.idle,0.05);
+    surface.scale.y=batter.scale.y;
+    surface.position.y=batter.position.y+batter.scale.y*0.71;
+
+    const lift=currentRecipe==='idle'?0:0.05+Math.sin(t*3)*0.01;
+    lid.position.y+=(1.42+lift-lid.position.y)*0.08;
+
+    function updateReveal(group,visible,ty){
+      const target=visible?1:0.0001;
+      group.scale.setScalar(THREE.MathUtils.lerp(group.scale.x,target,0.08));
+      if(ty!==undefined) group.position.y=THREE.MathUtils.lerp(group.position.y,visible?ty:ty-0.8,0.06);
+    }
+    updateReveal(dosaGroup,currentRecipe==='dosa',-0.4);
+    updateReveal(juiceGroup,currentRecipe==='juice');
+    updateReveal(sliceBoardGroup,currentRecipe==='slice');
+    updateReveal(flourGroup,currentRecipe==='flour');
+    if(currentRecipe==='flour') flourGroup.rotation.y=t*0.1;
+
+    const dosaVisible=currentRecipe==='dosa';
+    steamData.forEach(s=>{
+      s.mesh.position.y=(t*s.speed+s.offset)%2.0;
+      s.mesh.material.opacity=dosaVisible?Math.max(0,0.5-s.mesh.position.y*0.28):0;
+      s.mesh.position.x=s.x+Math.sin(t*0.6+s.offset)*0.1;
+    });
+
+    liquid.position.y=-0.05+Math.sin(t*1.5)*0.012;
+    sparkleMat.opacity=THREE.MathUtils.lerp(sparkleMat.opacity,currentRecipe!=='idle'?0.65:0,0.05);
+
+    /* subtle copper light pulse on active */
+    pop.intensity=1.6+(currentRecipe!=='idle'?Math.sin(t*2)*0.3:0);
+
+    renderer.render(scene,camera);
+  }
+  animate();
+})();
+</script>
+</body>
+</html>
